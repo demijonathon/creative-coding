@@ -8,29 +8,41 @@
 
 import java.util.*;
 
-PImage kitten;
-int pSize = 10;
-float hexSize = 4.0;
+PImage baseImage;
+int pSize = 4;
+float hexSize = 5.0;
 int ditherImageOffset;
 List<Particle> particles = new ArrayList<Particle>();
 int[][] particleRef;
 int xCellCount, yCellCount;
 
 float HEX_FLAT_HEIGHT = sqrt(3.0);
+boolean HEXMODE = true;
 
 void setup() {
+  String imageName = "london.jpg";
   size(1024, 512); // must be hard coded
-  kitten = loadImage("kitten.jpg");
-  kitten.filter(GRAY);
-  image(kitten, 0, 0);
-  ditherImageOffset = kitten.width;
-  xCellCount = floor(- 0.5 + (kitten.width / (hexSize * sqrt(3.0))));
-  yCellCount = floor(0.5 + (kitten.height / (hexSize * 1.5)));
+  baseImage = loadImage(imageName);
+  baseImage.filter(GRAY);
+  // Draw image to screen
+  image(baseImage, 0, 0);
+  ditherImageOffset = baseImage.width;
 
-  println("Kitten.jpg is " + kitten.width + " x " + kitten.height);
-  println("Cell count for size " + pSize + " is " + xCellCount + " x " + yCellCount);
-  createHexArrayReference(xCellCount, yCellCount);
-  ditherHexImage(6);
+  println(imageName + " is " + baseImage.width + " x " + baseImage.height);
+
+  int numColors = 6;
+
+  if (HEXMODE) {
+    xCellCount = floor(- 0.5 + (baseImage.width / (hexSize * sqrt(3.0))));
+    yCellCount = floor(0.5 + (baseImage.height / (hexSize * 1.5)));
+    createHexArrayReference(xCellCount, yCellCount);
+    println("Cell count for size " + pSize + " is " + xCellCount + " x " + yCellCount);
+
+    ditherHexImage(numColors);
+  } else {
+    println("Grid count for size " + pSize + " is " + baseImage.width / pSize + " x " + baseImage.height / pSize);
+    ditherImage(numColors);
+  }
 }
 
 void createHexArrayReference(int map_width, int map_height) {
@@ -49,12 +61,12 @@ void createHexArrayReference(int map_width, int map_height) {
 
 
 void ditherHexImage(int factor) {
-  //kitten.resize(0, ditherImageOffset/pSize);
-  //kitten.resize(0, ditherImageOffset);
-  //PImage newKitten = kitten.get();
-  image(kitten, ditherImageOffset, 0);
+  //baseImage.resize(0, ditherImageOffset/pSize);
+  //baseImage.resize(0, ditherImageOffset);
+  //PImage newbaseImage = baseImage.get();
+  //image(baseImage, ditherImageOffset, 0);
 
-  transformImageAsHexPoints(kitten);
+  transformImageAsHexPoints(baseImage);
   quantizeHexPointColors(factor);
   drawAllPoints();
 }
@@ -98,7 +110,7 @@ void quantizeHexPointColors(int factor) {
         for (int n=0; n< 3; n++) {
           int[] qLoopOffset = new int[]{1, 0, 1}; // q offset for each hex
           int[] rLoopOffset = new int[]{0, 1, 1}; // r offset for each hex
-          float[] errorDistib = new float[]{0.4, 0.3, 0.3}; // must sum to 1
+          float[] errorDist = new float[]{0.4, 0.3, 0.3}; // must sum to 1
 
           if ((q + r_offset + qLoopOffset[n] < map_width) && (r + rLoopOffset[n] < map_height)) {
             int indexN = particleRef[q + r_offset + qLoopOffset[n]][r + rLoopOffset[n]];
@@ -108,9 +120,9 @@ void quantizeHexPointColors(int factor) {
               float gre = particle.col.y;
               float blu = particle.col.z;
               // Spread the error out
-              red = red + errR * errorDistib[n];
-              gre = gre + errG * errorDistib[n];
-              blu = blu + errB * errorDistib[n];
+              red = red + errR * errorDist[n];
+              gre = gre + errG * errorDist[n];
+              blu = blu + errB * errorDist[n];
               particle.col = new PVector(red, gre, blu);
             }
           }
@@ -122,99 +134,62 @@ void quantizeHexPointColors(int factor) {
 
 
 void ditherImage(int factor) {
-  kitten.resize(0, ditherImageOffset/pSize);
-  kitten.loadPixels();
-  for (int y = 0; y < kitten.height-1; y++) {
-    for (int x = 1; x < kitten.width-1; x++) {
-      color pix = kitten.pixels[index(x, y)];
+  baseImage.resize(0, ditherImageOffset/pSize);
+  baseImage.loadPixels();
+  for (int y = 0; y < baseImage.height-1; y++) {
+    for (int x = 1; x < baseImage.width-1; x++) {
+      color pix = baseImage.pixels[index(x, y)];
       float oldR = red(pix);
       float oldG = green(pix);
       float oldB = blue(pix);
       int newR = round(factor * oldR / 255) * (255/factor);
       int newG = round(factor * oldG / 255) * (255/factor);
       int newB = round(factor * oldB / 255) * (255/factor);
-      kitten.pixels[index(x, y)] = color(newR, newG, newB);
+      baseImage.pixels[index(x, y)] = color(newR, newG, newB);
 
       float errR = oldR - newR;
       float errG = oldG - newG;
       float errB = oldB - newB;
 
+      int[] xStep = new int[]{1, -1, 0, 1};
+      int[] yStep = new int[]{0, 1, 1, 1};
+      float[] errorDist = new float[]{0.44, 0.19, 0.31, 0.06}; // must sum to 1
 
-      int index = index(x+1, y  );
-      color c = kitten.pixels[index];
-      float r = red(c);
-      float g = green(c);
-      float b = blue(c);
-      r = r + errR * 7/16.0;
-      g = g + errG * 7/16.0;
-      b = b + errB * 7/16.0;
-      kitten.pixels[index] = color(r, g, b);
-
-      index = index(x-1, y+1  );
-      c = kitten.pixels[index];
-      r = red(c);
-      g = green(c);
-      b = blue(c);
-      r = r + errR * 3/16.0;
-      g = g + errG * 3/16.0;
-      b = b + errB * 3/16.0;
-      kitten.pixels[index] = color(r, g, b);
-
-      index = index(x, y+1);
-      c = kitten.pixels[index];
-      r = red(c);
-      g = green(c);
-      b = blue(c);
-      r = r + errR * 5/16.0;
-      g = g + errG * 5/16.0;
-      b = b + errB * 5/16.0;
-      kitten.pixels[index] = color(r, g, b);
-
-
-      index = index(x+1, y+1);
-      c = kitten.pixels[index];
-      r = red(c);
-      g = green(c);
-      b = blue(c);
-      r = r + errR * 1/16.0;
-      g = g + errG * 1/16.0;
-      b = b + errB * 1/16.0;
-      kitten.pixels[index] = color(r, g, b);
+      for (int n=0; n<4; n++) {
+        if ((x>=0 && x<baseImage.width-1) && 
+          (y>=0 && y<baseImage.height-1)) {
+          int index = index(x+xStep[n], y+yStep[n] );
+          color c = baseImage.pixels[index];
+          float r = red(c);
+          float g = green(c);
+          float b = blue(c);
+          r = r + errR * errorDist[n];
+          g = g + errG * errorDist[n];
+          b = b + errB * errorDist[n];
+          baseImage.pixels[index] = color(r, g, b);
+        }
+      }
     }
   }
-  kitten.updatePixels();
-  PImage newKitten = kitten.get();
-  kitten.resize(0, ditherImageOffset);
-  image(kitten, ditherImageOffset, 0);
+  baseImage.updatePixels();
+  //PImage newbaseImage = baseImage.get();
+  //baseImage.resize(0, ditherImageOffset);
+  //image(baseImage, ditherImageOffset, 0);
 
-  //drawImageAsHexPoints(newKitten);
-  transformImageAsHexPoints(kitten);
-  //drawImageAsGridPoints(newKitten);
+  drawImageAsGridPoints(baseImage, 1);
 }
 
-/*
-PVector pixel_to_pointy_hex(PVector coords, int size) {
- q = (sqrt(3)/3 * coords.x - 1.0 /3 * coords.y) / size;
- r = (                       2.0 /3 * coords.y) / size;
- return new PVector(q, r);
- }*/
-
-
-void imageToHexPoints(PImage image) {
-  ;
-}
 
 int index(int x, int y) {
-  return x + y * kitten.width;
+  return (y * baseImage.width) + x;
 }
 
-int index(int x, int y, int width) {
-  return x + y * width;
+int index(int x, int y, int row_width) {
+  return (y * row_width) + x;
 }
 
+// Create Particles at centre of each hex
 void transformImageAsHexPoints(PImage image) {
-  stroke(255, 0, 0);
-  strokeWeight(HEX_FLAT_HEIGHT * hexSize);
   //int cellSize = pSize;
   float hexOffset = HEX_FLAT_HEIGHT * hexSize;
   float xCellOffset = hexSize * sqrt(3.0);
@@ -271,6 +246,7 @@ void calculateHexColors(PImage image) {
 
 
 void drawAllPoints() {
+  strokeWeight(HEX_FLAT_HEIGHT * hexSize);
   for (int i = 0; i< particles.size(); i++) {
 
     Particle particle = particles.get(i);
@@ -278,18 +254,34 @@ void drawAllPoints() {
   }
 }
 
-void drawImageAsGridPoints(PImage image) {
-  stroke(0, 0, 0);
+void drawImageAsGridPoints(PImage image, int mode) {
+
+  if (mode == 0) { // square mode
+    noStroke();
+    rectMode(CENTER);
+  } else { // point mode
+    noStroke();
+    rectMode(CORNERS);  // Default rectMode is CORNER
+    fill(127);
+    rect(512, 0, 1024, 512);
+  }
+
   strokeWeight(pSize);
 
   image.loadPixels();
 
-  println("Image dimentions are " + image.height + "/" + image.width);
+  //println("Image dimentions are " + image.height + "/" + image.width);
   for (int y = 0; y < image.height; y++) {
     for (int x = 0; x < image.width; x++) {
       color pix = image.pixels[index(x, y, image.width)];
-      if (red(pix) == 0 ) {
-        point(ditherImageOffset + (pSize * (x - 1/2)), (pSize * (y - 1/2)));
+      float xCentre = pSize * (float(x) + 0.5) + ditherImageOffset;
+      float yCentre = pSize * (float(y) + 0.5);
+      if (mode == 0) { // square mode
+        fill(pix);
+        rect(xCentre, yCentre, pSize, pSize);
+      } else {
+        stroke(pix);
+        point(xCentre, yCentre);
       }
     }
   }
