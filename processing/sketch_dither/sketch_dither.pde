@@ -8,16 +8,18 @@
 
 import java.util.*;
 
-PImage baseImage;
+boolean HEXMODE = true;
 int pSize = 4;
-float hexSize = 5.0;
+float hexSize = 6.0;
+
+PImage baseImage;
 int ditherImageOffset;
+
 List<Particle> particles = new ArrayList<Particle>();
 int[][] particleRef;
 int xCellCount, yCellCount;
 
 float HEX_FLAT_HEIGHT = sqrt(3.0);
-boolean HEXMODE = true;
 
 void setup() {
   String imageName = "london.jpg";
@@ -36,11 +38,11 @@ void setup() {
     xCellCount = floor(- 0.5 + (baseImage.width / (hexSize * sqrt(3.0))));
     yCellCount = floor(0.5 + (baseImage.height / (hexSize * 1.5)));
     createHexArrayReference(xCellCount, yCellCount);
-    println("Cell count for size " + pSize + " is " + xCellCount + " x " + yCellCount);
+    println("Hex Cell dimentions for size " + pSize + " is " + xCellCount + " x " + yCellCount);
 
     ditherHexImage(numColors);
-  } else {
-    println("Grid count for size " + pSize + " is " + baseImage.width / pSize + " x " + baseImage.height / pSize);
+  } else { // Grid mode
+    println("Grid dimentions for size " + pSize + " is " + baseImage.width / pSize + " x " + baseImage.height / pSize);
     ditherImage(numColors);
   }
 }
@@ -185,7 +187,23 @@ int index(int x, int y) {
 }
 
 int index(int x, int y, int row_width) {
-  return (y * row_width) + x;
+  int pos = (y * row_width) + x;
+  if (x>row_width) {
+    println("Index array params out of bounds");
+    return -1;
+  } else {
+    return pos;
+  }
+}
+
+int index(int x, int y, int row_width, int row_height) {
+  int pos = (y * row_width) + x;
+  if ((x>row_width) || (y > row_height)) {
+    println("Index array params out of bounds");
+    return -1;
+  } else {
+    return pos;
+  }
 }
 
 // Create Particles at centre of each hex
