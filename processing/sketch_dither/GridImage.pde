@@ -3,10 +3,14 @@ class GridImage {
   final int GI_POINTS = 1;
   int DRAW_MODE;
   final int pSize = 4;
+  int imageOffset;
+  PImage baseImage;
 
-  GridImage(PImage baseImage, int numColors) {
+  GridImage(PImage bImage, int iOffset, int numColors) {
     DRAW_MODE = GI_POINTS;
+    baseImage = bImage;
     println("Grid dimentions for size " + pSize + " is " + baseImage.width / pSize + " x " + baseImage.height / pSize);
+    imageOffset = iOffset;
     calcDitherImage(baseImage, numColors);
   }
 
@@ -14,7 +18,7 @@ class GridImage {
   /* scale grid by pixel size of grid, then rewrite the colour value
    push difference from quantized color and push forward. */
   void calcDitherImage(PImage baseImage, int factor) { 
-    baseImage.resize(0, ditherImageOffset/pSize);
+    baseImage.resize(0, imageOffset/pSize);
     baseImage.loadPixels();
     for (int y = 0; y < baseImage.height-1; y++) {
       for (int x = 1; x < baseImage.width-1; x++) {
@@ -53,8 +57,8 @@ class GridImage {
     }
     baseImage.updatePixels();
     //PImage newbaseImage = baseImage.get();
-    //baseImage.resize(0, ditherImageOffset);
-    //image(baseImage, ditherImageOffset, 0);
+    //baseImage.resize(0, imageOffset);
+    //image(baseImage, imageOffset, 0);
 
     //drawImageAsGridPoints(baseImage, 1);
   }
@@ -94,7 +98,7 @@ class GridImage {
     for (int y = 0; y < image.height; y++) {
       for (int x = 0; x < image.width; x++) {
         color pix = image.pixels[index(x, y, image.width)];
-        float xCentre = pSize * (float(x) + 0.5) + ditherImageOffset;
+        float xCentre = pSize * (float(x) + 0.5) + imageOffset;
         float yCentre = pSize * (float(y) + 0.5);
         if (DRAW_MODE == GI_SQUARES) { // square mode
           fill(pix);

@@ -2,19 +2,19 @@ class HexImage {
   // HexImage is made up of (honeycomb) cells in rows and cols
   // Map cells onto a 2d array where the index is W-E (r) and NW-SE (q)
 
-  final float hexSize = 4.0; // edge length in pixels
+  final float hexSize = 6.0; // edge length in pixels
   final float HEX_FLAT_HEIGHT = sqrt(3.0);
 
   int[][] particleRef;
   int xCellCount, yCellCount; // num of cells in rows and columns, pointy top configuration
 
-  HexImage(int imageWidth, int imageHeight, int numColors) {
-    xCellCount = floor(- 0.5 + (imageWidth / (hexSize * sqrt(3.0))));
-    yCellCount = floor(0.5 + (imageHeight / (hexSize * 1.5)));
+  HexImage(PImage bImage, int ditherImageOffset, int numColors) {
+    xCellCount = floor(- 0.5 + (bImage.width / (hexSize * sqrt(3.0))));
+    yCellCount = floor(0.5 + (bImage.height / (hexSize * 1.5)));
     createHexArrayReference(xCellCount, yCellCount);
     println("Hex Cell dimentions for size " + hexSize + " is " + xCellCount + " x " + yCellCount);
 
-    calcDitherHexImage(numColors);
+    calcDitherHexImage(bImage, numColors, ditherImageOffset);
   }
 
   /* Populate the 2d array with the particle id which maps to the ordering of the hexes.
@@ -35,14 +35,14 @@ class HexImage {
 
   /* Calculate the colours for each of the hexagons in full RGB
    Then quantise down to the number provided as the factor. */
-  private void calcDitherHexImage(int factor) {
-    transformImageAsHexPoints(baseImage);
+  private void calcDitherHexImage(PImage baseImage, int factor, int offset) {
+    transformImageAsHexPoints(baseImage, offset);
     calculateHexColors(baseImage);
     quantizeHexPointColors(factor);
   }
 
   // Create Particles at centre of each hex
-  private void transformImageAsHexPoints(PImage image) {
+  private void transformImageAsHexPoints(PImage image, int drawOffset) {
     //int cellSize = pSize;
     float hexOffset = HEX_FLAT_HEIGHT * hexSize;
     float xCellOffset = hexSize * sqrt(3.0);
@@ -58,7 +58,7 @@ class HexImage {
         hexOffset = HEX_FLAT_HEIGHT * hexSize;
       }
       for (int x = 0; x < xCellCount; x++) {
-        float hexX = ditherImageOffset + hexOffset + (x*xCellOffset);
+        float hexX = drawOffset + hexOffset + (x*xCellOffset);
         float hexY = hexSize + (yCellOffset * y);
         particles.add(new Particle(hexX, hexY, true));
       }
@@ -148,6 +148,24 @@ class HexImage {
             }
           }
         }
+      }
+    }
+  }
+
+  int getPointCount() {
+    return particles.size();
+  }
+
+  void assignNewTargets(int maxPoints, int[] shIndex) {
+    if (particles != null) {
+      Vehicle v;
+      Particle p;
+      for (int i=0; i<maxPoints; i++) {
+        v = vehicles.get(shIndex[i]);
+        p = particles.get(i%getPointCount());
+        v.target.x = p.pos.x;
+        v.target.y = p.pos.y;
+        v.col = p.col;
       }
     }
   }
