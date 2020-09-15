@@ -42,11 +42,12 @@ void setup() {
 
   println(imageName + " is " + baseImage.width + " x " + baseImage.height);
 
-  int numColors = 2;
+  int numColors = 4;
   int hexPointCount;
+  int pSize = 4; // 5 or less
 
   if (HEXMODE) {
-    hexData = new HexImage(baseImage, ditherImageOffset, numColors);
+    hexData = new HexImage(baseImage, ditherImageOffset, numColors,float(pSize));
     hexPointCount = hexData.getPointCount();
     //hexData.drawAllPoints();
   } else { // Grid mode
@@ -55,20 +56,19 @@ void setup() {
   }
 
   RG.init(this);
-  word1Data = new SvgWord("Hello World", width/2, 3*height/4);
+  word1Data = new SvgWord("Hello World", width/2, 3*height/5, pSize);
   int word1PointCount = word1Data.calcWordPoints();
 
-  word2Data = new SvgWord("Are you not", width/2, 3*height/4);
+  word2Data = new SvgWord("Are you not", width/2, 3*height/5, pSize);
   int word2PointCount = word2Data.calcWordPoints();
 
-  word3Data = new SvgWord("Entertained ?", width/2, 3*height/4);
+  word3Data = new SvgWord("Entertained ?", width/2, 3*height/5, pSize);
   int word3PointCount = word3Data.calcWordPoints();
 
   println("Hex points number: " + hexPointCount + " and word points number: " + word1PointCount);
   int[] pointCounts = {hexPointCount, word1PointCount, word2PointCount, word3PointCount};
   maxVehicles = max(pointCounts);
 
-  int pSize =6;
   shuffleIndex1 = new int[maxVehicles];
   shuffleIndex2 = new int[maxVehicles];
   for (int i=0; i<maxVehicles; i++) {

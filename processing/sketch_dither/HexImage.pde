@@ -2,13 +2,14 @@ class HexImage {
   // HexImage is made up of (honeycomb) cells in rows and cols
   // Map cells onto a 2d array where the index is W-E (r) and NW-SE (q)
 
-  final float hexSize = 6.0; // edge length in pixels
+  float hexSize = 4.0; // edge length in pixels
   final float HEX_FLAT_HEIGHT = sqrt(3.0);
 
   int[][] particleRef;
   int xCellCount, yCellCount; // num of cells in rows and columns, pointy top configuration
 
-  HexImage(PImage bImage, int ditherImageOffset, int numColors) {
+  HexImage(PImage bImage, int ditherImageOffset, int numColors, float size) {
+    hexSize = size;
     xCellCount = floor(- 0.5 + (bImage.width / (hexSize * sqrt(3.0))));
     yCellCount = floor(0.5 + (bImage.height / (hexSize * 1.5)));
     createHexArrayReference(xCellCount, yCellCount);

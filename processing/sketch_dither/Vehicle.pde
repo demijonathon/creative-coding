@@ -13,6 +13,8 @@ class Vehicle {
   float maxspeed;
   float maxforce;
 
+  final float HEX_FLAT_HEIGHT = sqrt(3.0);
+  
   Vehicle(float x, float y, int size) {
     this.pos = new PVector(x, y);
     this.target = new PVector(x, y);
@@ -49,7 +51,7 @@ class Vehicle {
   void show() {
     //stroke(255);
     stroke(int(this.col.x), int(this.col.y), int(this.col.z));
-    strokeWeight(this.r);
+    strokeWeight(this.r*HEX_FLAT_HEIGHT);
     point(this.pos.x, this.pos.y);
   }
 

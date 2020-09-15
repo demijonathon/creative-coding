@@ -8,8 +8,9 @@ class SvgWord {
   //String my_word = "Happy Birthday!";
   int xOffset;
   int yOffset;
+  int pSize;
 
-  SvgWord(String my_word, int xOff, int yOff) {
+  SvgWord(String my_word, int xOff, int yOff, int size) {
 
     // VERY IMPORTANT: Always initialize the library in the main setup
     if (RG.initialized() != true) {
@@ -18,6 +19,7 @@ class SvgWord {
     }
     xOffset = xOff;
     yOffset = yOff;
+    pSize = size * 3 / 2;
 
     //  Load the font file we want to use (the file must be in the data folder in the sketch floder), 
     // with the size 60 and the alignment CENTER
@@ -37,7 +39,7 @@ class SvgWord {
     RG.setPolygonizer(RG.UNIFORMLENGTH);
     // Length is scaled between 3 and 200 using mouseY value
     //RG.setPolygonizerLength(map(mouseY, 0, height, 3, 200));
-    RG.setPolygonizerLength(6);
+    RG.setPolygonizerLength(pSize);
     points = grp.getPoints();
 
     return points.length;
