@@ -13,14 +13,17 @@ import java.util.Arrays;
 import java.util.Random;
 
 final boolean HEXMODE = true;
-final int WAIT_TIME = 2 * 1000;
-final int TRANS_TIME = 3 * 1000;
+final int WAIT_TIME_MS = 2 * 1000;
+final int TRANS_TIME_MS = 3 * 1000;
 final int NUM_STEPS = 4;
-final int CYCLE_TIME = NUM_STEPS * (WAIT_TIME + TRANS_TIME);
+final int STEP_TIME_MS = WAIT_TIME_MS + TRANS_TIME_MS;
+final int CYCLE_TIME_MS = NUM_STEPS * STEP_TIME_MS;
 int step_count = 4;
+int prevStep=0;
 boolean new_target = true;
 int maxVehicles;
 int[] shuffleIndex1, shuffleIndex2;
+int[] pointCounts = new int[4];
 
 List<Particle> particles = new ArrayList<Particle>();
 List<Vehicle> vehicles = new ArrayList<Vehicle>();
@@ -28,10 +31,13 @@ List<Vehicle> vehicles = new ArrayList<Vehicle>();
 HexImage hexData;
 GridImage gridData;
 SvgWord word1Data, word2Data, word3Data;
+SvgShape shape1Data, shape2Data, shape3Data;
 
 void setup() {
   PImage baseImage;
-  String imageName = "london.jpg"; // 512x512
+  String imageName = "sandf2.jpg"; // 512x512
+  String messageOne = "Merry Christmas";
+  String messageTwo = "Steph & Frank";
   size(512, 512); // window size must be hard coded
   baseImage = loadImage(imageName);
   baseImage.filter(GRAY);
@@ -40,15 +46,14 @@ void setup() {
   //image(baseImage, 0, 0);
   int ditherImageOffset = 0;
 
-  println(imageName + " is " + baseImage.width + " x " + baseImage.height);
+  println("Using image" + imageName + " : " + baseImage.width + " x " + baseImage.height);
 
   int numColors = 4;
-  int hexPointCount;
-  int pSize = 4; // 5 or less
+  int pSize = 3; // Particle draw size - 5 or less
 
   if (HEXMODE) {
-    hexData = new HexImage(baseImage, ditherImageOffset, numColors,float(pSize));
-    hexPointCount = hexData.getPointCount();
+    hexData = new HexImage(baseImage, ditherImageOffset, numColors, float(pSize));
+    pointCounts[0] = hexData.getPointCount();
     //hexData.drawAllPoints();
   } else { // Grid mode
     gridData = new GridImage(baseImage, ditherImageOffset, numColors);
@@ -56,17 +61,17 @@ void setup() {
   }
 
   RG.init(this);
-  word1Data = new SvgWord("Hello World", width/2, 3*height/5, pSize);
-  int word1PointCount = word1Data.calcWordPoints();
+  word1Data = new SvgWord(messageOne, width/2, 3*height/5, pSize, 60);
+  pointCounts[1] = word1Data.calcWordPoints();
 
-  word2Data = new SvgWord("Are you not", width/2, 3*height/5, pSize);
-  int word2PointCount = word2Data.calcWordPoints();
+  shape2Data = new SvgShape(1, width/2, 3*height/5, pSize);
+  pointCounts[2] = shape2Data.calcShapePoints();
 
-  word3Data = new SvgWord("Entertained ?", width/2, 3*height/5, pSize);
-  int word3PointCount = word3Data.calcWordPoints();
+  word3Data = new SvgWord(messageTwo, width/2, 3*height/5, pSize, 72);
+  pointCounts[3] = word3Data.calcWordPoints();
 
-  println("Hex points number: " + hexPointCount + " and word points number: " + word1PointCount);
-  int[] pointCounts = {hexPointCount, word1PointCount, word2PointCount, word3PointCount};
+  println("Hex image points number: " + pointCounts[0] + " // word 1 points number: " + pointCounts[1]);
+  println("Shape 2 points number: " + pointCounts[2] + " // word 3 points number: " + pointCounts[3]);
   maxVehicles = max(pointCounts);
 
   shuffleIndex1 = new int[maxVehicles];
@@ -91,10 +96,12 @@ void setup() {
   }
 }
 
-
+// A cycle is a full set of steps
 void draw() {
-  int m=millis() % CYCLE_TIME;
-  int tmp_step = m/(WAIT_TIME + TRANS_TIME);
+  int mSecPerCycle=millis() % CYCLE_TIME_MS;
+  int tmp_step = mSecPerCycle/STEP_TIME_MS; // rounds to integer
+  float transition = (mSecPerCycle - (tmp_step*STEP_TIME_MS))/(float)TRANS_TIME_MS;
+  //println("transition: " + transition);
 
   if (tmp_step != step_count) {
     new_target = true;
@@ -103,28 +110,27 @@ void draw() {
 
   if (new_target) {
     switch (step_count) {
-      case(0): 
-      {
+      case(0): {
         hexData.assignNewTargets(maxVehicles, shuffleIndex1);
+        prevStep = pointCounts.length - 1;
         break;
       }
-      case(1): 
-      {
+      case(1): {
         word1Data.assignNewTargets(maxVehicles, shuffleIndex2);
+        prevStep = 0;
         break;
       }
-      case(2): 
-      {
-        word2Data.assignNewTargets(maxVehicles, shuffleIndex1);
+      case(2): {
+        shape2Data.assignNewTargets(maxVehicles, shuffleIndex1);
+        prevStep = 1;
         break;
       }
-      case(3): 
-      {
+      case(3): {
         word3Data.assignNewTargets(maxVehicles, shuffleIndex2);
+        prevStep = 2;
         break;
       }
-    default: 
-      {
+    default: {
         break;
       }
     }
@@ -132,13 +138,16 @@ void draw() {
 
   new_target = false;
   background(51);
+  int maxShowCount=(maxVehicles + max(new int[] {pointCounts[step_count], pointCounts[prevStep]})) / 2;
 
-  //println("step count" + step_count);
+  //println("step count: " + step_count + "prevstep count: " + prevStep + "// max show count: " + maxShowCount);
   for (int i = 0; i < vehicles.size(); i++) {
     Vehicle v = vehicles.get(i);
-    v.behaviors();
+    v.behaviors(transition);
     v.update();
-    v.show();
+    if (i < maxShowCount) {
+      v.show(transition,i);
+    }
   }
 
   //delay(100);

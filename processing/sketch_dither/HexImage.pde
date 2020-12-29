@@ -35,11 +35,11 @@ class HexImage {
   }
 
   /* Calculate the colours for each of the hexagons in full RGB
-   Then quantise down to the number provided as the factor. */
-  private void calcDitherHexImage(PImage baseImage, int factor, int offset) {
+   Then quantise down to the number provided as the numColourLevels. */
+  private void calcDitherHexImage(PImage baseImage, int numColourLevels, int offset) {
     transformImageAsHexPoints(baseImage, offset);
     calculateHexColors(baseImage);
-    quantizeHexPointColors(factor);
+    quantizeHexPointColors(numColourLevels);
   }
 
   // Create Particles at centre of each hex
@@ -51,7 +51,7 @@ class HexImage {
 
     image.loadPixels();
 
-    println("Image dimentions are " + image.height + "/" + image.width);
+    //println("Image dimentions are " + image.height + "/" + image.width);
     for (int y = 0; y < yCellCount; y++) {
       if (y%2 == 0) {
         hexOffset = HEX_FLAT_HEIGHT * hexSize/2.0;
@@ -98,7 +98,7 @@ class HexImage {
 
   /* Loop through each hex, work out nearest color level, and push the
    difference onto next hexes */
-  private void quantizeHexPointColors(int factor) {
+  private void quantizeHexPointColors(int numColourLevels) {
     int map_width = xCellCount;
     int map_height = yCellCount;
     int r_offset = floor(map_height / 2);
@@ -117,9 +117,9 @@ class HexImage {
           float oldG = particle.col.y;
           float oldB = particle.col.z;
           // quantize the color
-          int newR = round(factor * oldR / 255) * (255/factor);
-          int newG = round(factor * oldG / 255) * (255/factor);
-          int newB = round(factor * oldB / 255) * (255/factor);
+          int newR = round(numColourLevels * oldR / 255) * (255/numColourLevels);
+          int newG = round(numColourLevels * oldG / 255) * (255/numColourLevels);
+          int newB = round(numColourLevels * oldB / 255) * (255/numColourLevels);
           particle.col = new PVector(float(newR), float(newG), float(newB));
 
           // calculate the error to push fwd
@@ -144,6 +144,9 @@ class HexImage {
                 red = red + errR * errorDist[n];
                 gre = gre + errG * errorDist[n];
                 blu = blu + errB * errorDist[n];
+                //if ((red > 255.0) || (gre > 255.0) || (blu > 255.0)) {
+                //  println("Index: " + index + " // red: " + red + " // green: " + gre + " // blue: " + blu);
+                //}
                 particle.col = new PVector(red, gre, blu);
               }
             }
@@ -166,7 +169,7 @@ class HexImage {
         p = particles.get(i%getPointCount());
         v.target.x = p.pos.x;
         v.target.y = p.pos.y;
-        v.col = p.col;
+        v.targetCol = p.col;
       }
     }
   }

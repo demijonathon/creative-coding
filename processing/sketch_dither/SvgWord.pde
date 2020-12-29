@@ -10,7 +10,7 @@ class SvgWord {
   int yOffset;
   int pSize;
 
-  SvgWord(String my_word, int xOff, int yOff, int size) {
+  SvgWord(String my_word, int xOff, int yOff, int size, int fsize) {
 
     // VERY IMPORTANT: Always initialize the library in the main setup
     if (RG.initialized() != true) {
@@ -23,8 +23,14 @@ class SvgWord {
 
     //  Load the font file we want to use (the file must be in the data folder in the sketch floder), 
     // with the size 60 and the alignment CENTER
-    grp = RG.getText(my_word, "FreeSans.ttf", 72, CENTER);
-
+    if (my_word.contains("\n") ) {
+      String[] lines = my_word.split("\n");
+      grp = RG.getText(lines[0], "FreeSans.ttf", fsize, CENTER);
+    }
+    else {
+      grp = RG.getText(my_word, "FreeSans.ttf", fsize, CENTER);
+    }
+    
     // Enable smoothing
     //smooth();
   }
@@ -56,7 +62,7 @@ class SvgWord {
         v.target.x = points[modI].x + xOffset;
         v.target.y = points[modI].y + yOffset;
         
-        v.col = new PVector(255,255,255);
+        v.targetCol = new PVector(255.0,240.0,255.0);
         //println("New position: " + v.target.x + " , " + v.target.y);
       }
     }
